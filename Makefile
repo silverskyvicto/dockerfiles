@@ -66,10 +66,11 @@ $(1) $(1)-minimal $(1)-freeze-file: STACK = $(1)
 $(1): $(1)-minimal
 $(1)-minimal: minimal
 $(1)-freeze-file: $(1)/$(stack_freeze_file)
-# Only alpine and ubuntu support core and latex images
+# Only alpine and ubuntu support core, context, and latex images
 ifeq ($(1),$(filter $(1),alpine ubuntu))
-.PHONY: $(1)-core $(1)-latex
+.PHONY: $(1)-core $(1)-context $(1)-latex
 $(1)-core: core
+$(1)-context: context
 $(1)-latex: latex
 endif
 
@@ -132,6 +133,16 @@ core: $(STACK)/$(stack_freeze_file)
 		-c "$(PANDOC_COMMIT)" \
 		-d "$(makefile_dir)" \
 		-t "$(STACK)-core" \
+		$(docker_cpu_options)
+# ConTeXt ###############################################################
+.PHONY: context
+context: $(STACK)/$(stack_freeze_file)
+	./build.sh build -v \
+		-r context \
+		-s "$(STACK)" \
+		-c "$(PANDOC_COMMIT)" \
+		-d "$(makefile_dir)" \
+		-t "$(STACK)-context" \
 		$(docker_cpu_options)
 # LaTeX #################################################################
 .PHONY: latex

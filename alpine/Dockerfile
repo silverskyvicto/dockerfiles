@@ -91,8 +91,8 @@ COPY --from=alpine-builder \
 RUN apk --no-cache add \
         librsvg
 
-# LaTeX #################################################################
-FROM alpine-core as alpine-latex
+# TeX Live ##############################################################
+FROM alpine-core as alpine-texlive
 
 # NOTE: to maintainers, please keep this listing alphabetical.
 RUN apk --no-cache add \
@@ -115,20 +115,41 @@ WORKDIR /root
 # Installer scripts and config
 COPY common/latex/texlive.profile /root/texlive.profile
 COPY common/latex/install-texlive.sh /root/install-texlive.sh
-COPY common/latex/packages.txt /root/packages.txt
 
 # TeXLive version to install (leave empty to use the latest version).
 ARG texlive_version=
 
 # Request musl precompiled binary access
 RUN echo "binary_x86_64-linuxmusl 1" >> /root/texlive.profile \
-  && /root/install-texlive.sh $texlive_version \
-  && sed -e 's/ *#.*$//' -e '/^ *$/d' /root/packages.txt | \
-     xargs tlmgr install \
-  && rm -f /root/texlive.profile \
-           /root/install-texlive.sh \
-           /root/packages.txt \
-  && TERM=dumb luaotfload-tool --update \
-  && chmod -R o+w /opt/texlive/texdir/texmf-var
+    && /root/install-texlive.sh $texlive_version \
+    && rm -f /root/texlive.profile \
+             /root/install-texlive.sh \
+    && chmod -R o+w /opt/texlive/texdir/texmf-var
 
 WORKDIR /data
+
+# ConTeXt ###############################################################
+FROM alpine-texlive as alpine-context
+
+RUN tlmgr install \
+    collection-context \
+    collection-metapost \
+    ccicons \
+    dejavu \
+    eulervm \
+    tex-gyre \
+    tex-gyre-math \
+    pxfonts \
+    txfonts
+
+# LaTeX #################################################################
+FROM alpine-texlive as alpine-latex
+
+# List of LaTeX packages to install
+COPY common/latex/packages.txt /root/packages.txt
+
+# Request musl precompiled binary access
+RUN  sed -e 's/ *#.*$//' -e '/^ *$/d' /root/packages.txt | \
+     xargs tlmgr install \
+  && rm -f /root/packages.txt \
+  && TERM=dumb luaotfload-tool --update

@@ -6,6 +6,8 @@
 #       longtable -> tools
 
 # Redundant, as included in `scheme-basic`
+collection-basic
+collection-latex
 amsfonts
 amsmath
 geometry
