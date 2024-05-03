@@ -5,6 +5,7 @@ on:
     # Build and publish: configure build via commit message
     branches:
       - master
+      - texlive-alpine
     paths-ignore:
       - '.dockerignore'
       - '.github/FUNDING.yml'
